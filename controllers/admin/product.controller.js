@@ -216,3 +216,40 @@ module.exports.detail = async (req, res) => {
         product: product
     })
 }
+
+//[GET] /admin/products/restore
+module.exports.restore = async (req, res) => {
+
+    const find = {
+        deleted: true
+    }
+
+    const products = await Product.find(find);
+
+    res.render('admin/pages/products/bin', {
+        pageTitle: 'Thùng rác',
+        products: products
+    });
+}
+
+//[PATCH] /admin/products/bin/restore/:id
+module.exports.restorePatch = async (req, res) => {
+    const id = req.params.id;
+
+    await Product.updateOne({_id: id}, {
+        deleted: false,
+        deletedAt: new Date()
+    });
+
+    req.flash('success', 'Khôi phục thành công !');
+    res.redirect('back');
+}
+
+//[DELETE] /admin/products/bin/delete/:id
+module.exports.bin = async (req, res) => {
+    const id = req.params.id;
+
+    await Product.deleteOne({_id: id});
+    req.flash('success', 'Xóa sản phẩm thành công !');
+    res.redirect('back');
+}
