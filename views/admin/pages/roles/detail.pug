@@ -1,0 +1,15 @@
+extend ../../layouts/default.pug
+
+block main 
+    if (record.title)
+        h1(class="mb-4") #{record.title}
+    
+    if (record.description)
+        div(class="mb-4") Mô tả ngắn: #{record.description}
+    
+    a(
+        href=`${prefixAdmin}/roles/edit/${record.id}`
+        type="submit"
+        class="btn btn-warning"
+        ) Chỉnh sửa
+        

@@ -4,6 +4,8 @@ const filterStatusHelper = require('../../helpers/filterStatus');
 const searchHelper = require('../../helpers/search');
 const paginationHelper = require('../../helpers/pagination');
 const systemConfig = require('../../config/system')
+const createTreeHelper = require('../../helpers/createTree');
+const ProductCategory = require('../../models/product-category.model');
 
 //[GET] /admin/products
 module.exports.index = async (req, res) => {
@@ -37,12 +39,20 @@ module.exports.index = async (req, res) => {
         countProducts
     )
     
+    //Sort
+    let sort = {};
+    if (req.query.sortKey && req.query.sortValue){
+        sort[req.query.sortKey] = req.query.sortValue;
+    } else {
+        sort.position = "desc";
+    }
     
+   //console.log(sort);
 
     const products = await Product.find(find)
     .limit(objectPagination.limitedItems)
     .skip(objectPagination.skip)
-    .sort({position:'desc'});
+    .sort(sort);
     //console.log(products);
 
     res.render('admin/pages/products/index', {
@@ -128,9 +138,17 @@ module.exports.deleteItem = async (req, res) => {
 
 
 //[GET] admin/products/create
-module.exports.create = (req, res) => {
+module.exports.create = async(req, res) => {
+    const find = {
+        deleted: false
+    }
+
+    const category = await ProductCategory.find(find);
+    const newCategory = createTreeHelper.tree(category);
+
     res.render('admin/pages/products/create', {
-        pageTitle: 'Thêm mới sản phẩm'
+        pageTitle: 'Thêm mới sản phẩm',
+        category: newCategory
     });
 }
 
@@ -165,10 +183,13 @@ module.exports.edit = async (req, res) => {
         }
 
         const product = await Product.findOne(find);
+        const category = await ProductCategory.find({deleted: false});
+        const newCategory = createTreeHelper.tree(category);
 
         res.render('admin/pages/products/edit', {
             pageTitle: 'Chỉnh sửa sản phẩm',
-            product: product
+            product: product,
+            category: newCategory
         });
     } catch {
         res.redirect(`${systemConfig.prefixAdmin}/products`);
@@ -193,7 +214,7 @@ module.exports.editPatch = async (req, res) => {
     try{
         await Product.updateOne({_id: id}, req.body);
         req.flash('success', 'Cập nhật thành công');
-    } catch {
+    } catch (error) {
         req.flash('error', 'Cập nhật thất bại');
     }
 
