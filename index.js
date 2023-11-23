@@ -6,12 +6,21 @@ const session = require("express-session");
 var methodOverride = require('method-override');
 var bodyParser = require('body-parser')
 const multer  = require('multer')
+const moment = require("moment");
+const http = require('http');
+const { Server } = require("socket.io");
 
 
 const app = express();
 
 require('dotenv').config();
 const port = process.env.PORT;
+
+// SocketIO
+const server = http.createServer(app);
+const io = new Server(server);
+global._io = io;
+// End SocketIO
 
 app.use(methodOverride('_method'));
 
@@ -42,15 +51,21 @@ app.use(
 
 //App local
 app.locals.prefixAdmin = systemConfig.prefixAdmin;
+app.locals.moment = moment;
 
 app.use(express.static(`${__dirname}/public`));
 
 //Route
 route(app);
 routeAdmin(app);
+app.get("*", (req, res) => {
+  res.render("client/pages/errors/404", {
+    pageTitle: "404 Not Found",
+  });
+});
 
 database.connect();
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
   })
